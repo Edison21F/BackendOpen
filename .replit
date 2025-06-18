@@ -13,20 +13,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Backend Server"
+args = "install-dependencies"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "install-dependencies"
-
-[[workflows.workflow]]
-name = "Backend Server"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm install express cors helmet morgan express-rate-limit compression joi bcrypt jsonwebtoken winston mongoose sequelize pg pg-hstore uuid dotenv && npm start"
-waitForPort = 5000
+args = "OpenBlind Backend"
 
 [[workflows.workflow]]
 name = "install-dependencies"
@@ -35,6 +26,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd /home/runner/workspace && npm install express cors helmet morgan express-rate-limit compression joi bcrypt jsonwebtoken sequelize pg mongoose winston uuid crypto dotenv"
+
+[[workflows.workflow]]
+name = "OpenBlind Backend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=5000 node server.js"
+waitForPort = 5000
 
 [deployment]
 run = ["sh", "-c", "npm install express cors helmet morgan express-rate-limit compression joi bcrypt jsonwebtoken winston mongoose sequelize pg pg-hstore uuid dotenv && npm start"]

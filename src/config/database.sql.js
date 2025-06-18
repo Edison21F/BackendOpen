@@ -2,23 +2,34 @@ const { Sequelize } = require('sequelize');
 const config = require('./config');
 
 // Create PostgreSQL connection
-const sequelize = new Sequelize(
-  config.database.postgres.database,
-  config.database.postgres.username,
-  config.database.postgres.password,
-  {
-    host: config.database.postgres.host,
-    port: config.database.postgres.port,
-    dialect: config.database.postgres.dialect,
-    logging: config.database.postgres.logging,
-    pool: config.database.postgres.pool,
-    define: {
-      timestamps: true,
-      underscored: true,
-      freezeTableName: true
-    }
-  }
-);
+const sequelize = config.database.postgres.url 
+  ? new Sequelize(config.database.postgres.url, {
+      dialect: config.database.postgres.dialect,
+      logging: config.database.postgres.logging,
+      pool: config.database.postgres.pool,
+      define: {
+        timestamps: true,
+        underscored: true,
+        freezeTableName: true
+      }
+    })
+  : new Sequelize(
+      config.database.postgres.database,
+      config.database.postgres.username,
+      config.database.postgres.password,
+      {
+        host: config.database.postgres.host,
+        port: config.database.postgres.port,
+        dialect: config.database.postgres.dialect,
+        logging: config.database.postgres.logging,
+        pool: config.database.postgres.pool,
+        define: {
+          timestamps: true,
+          underscored: true,
+          freezeTableName: true
+        }
+      }
+    );
 
 // Test the connection
 const testConnection = async () => {

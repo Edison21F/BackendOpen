@@ -6,7 +6,7 @@ dotenv.config();
 const config = {
   // Server configuration
   server: {
-    port: process.env.PORT || 8000,
+    port: process.env.PORT || 5000,
     host: '0.0.0.0',
     nodeEnv: process.env.NODE_ENV || 'development'
   },
@@ -14,11 +14,13 @@ const config = {
   // Database configuration
   database: {
     postgres: {
-      host: process.env.POSTGRES_HOST || 'localhost',
-      port: parseInt(process.env.POSTGRES_PORT) || 5432,
-      database: process.env.POSTGRES_DB || 'openblind_db',
-      username: process.env.POSTGRES_USER || 'postgres',
-      password: process.env.POSTGRES_PASSWORD || 'password',
+      // Use DATABASE_URL if available, otherwise individual components
+      url: process.env.DATABASE_URL,
+      host: process.env.PGHOST || 'localhost',
+      port: parseInt(process.env.PGPORT) || 5432,
+      database: process.env.PGDATABASE || 'openblind_db',
+      username: process.env.PGUSER || 'postgres',
+      password: process.env.PGPASSWORD || 'password',
       dialect: 'postgres',
       logging: false,
       pool: {

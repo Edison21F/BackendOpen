@@ -134,6 +134,24 @@ const createApp = () => {
   // Performance monitoring
   app.use(performanceLogger(1000)); // Log requests slower than 1s
 
+  // Root endpoint
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: 'Welcome to OpenBlind API',
+      data: {
+        service: 'OpenBlind Backend API',
+        version: '1.0.0',
+        status: 'active',
+        endpoints: {
+          api: '/api',
+          health: '/health',
+          documentation: '/api'
+        }
+      }
+    });
+  });
+
   // Health check endpoint
   app.get('/health', async (req, res) => {
     try {

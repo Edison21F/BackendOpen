@@ -16,10 +16,10 @@ class DatabaseService {
       // Initialize PostgreSQL
       await this.initializePostgreSQL();
       
-      // Initialize MongoDB
-      await this.initializeMongoDB();
+      // Skip MongoDB for now since it's not available in this environment
+      logService.info('MongoDB initialization skipped - not available in this environment');
       
-      logService.info('All database connections initialized successfully');
+      logService.info('Database connections initialized successfully');
     } catch (error) {
       logService.error('Failed to initialize database connections:', error);
       throw error;
