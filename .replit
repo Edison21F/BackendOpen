@@ -1,0 +1,40 @@
+modules = ["nodejs-20"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend Server"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "install-dependencies"
+
+[[workflows.workflow]]
+name = "Backend Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install express cors helmet morgan express-rate-limit compression joi bcrypt jsonwebtoken winston mongoose sequelize pg pg-hstore uuid dotenv && npm start"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "install-dependencies"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /home/runner/workspace && npm install express cors helmet morgan express-rate-limit compression joi bcrypt jsonwebtoken sequelize pg mongoose winston uuid crypto dotenv"
+
+[deployment]
+run = ["sh", "-c", "npm install express cors helmet morgan express-rate-limit compression joi bcrypt jsonwebtoken winston mongoose sequelize pg pg-hstore uuid dotenv && npm start"]
