@@ -204,16 +204,43 @@ const createApp = () => {
     });
   });
 
+  // RBAC Initialization endpoint (temporary - no auth required)
+  app.post('/api/init-rbac', async (req, res) => {
+    try {
+      const rbacService = require('./services/rbacService');
+      await rbacService.initializeRBAC();
+      
+      res.status(200).json({
+        success: true,
+        message: 'RBAC system initialized successfully',
+        data: {
+          status: 'initialized',
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to initialize RBAC system',
+        error: error.message
+      });
+    }
+  });
+
   // Test endpoint to verify database relationships
   app.get('/api/test', async (req, res) => {
     try {
-      const { User, Route, PersonalizedMessage, TouristRegistration } = models;
+      const { User, Route, PersonalizedMessage, TouristRegistration, Role, Permission, UserRole, RolePermission } = models;
       
       // Test database connection
       const userCount = await User.count();
       const routeCount = await Route.count();
       const messageCount = await PersonalizedMessage.count();
       const touristCount = await TouristRegistration.count();
+      const roleCount = await Role.count();
+      const permissionCount = await Permission.count();
+      const userRoleCount = await UserRole.count();
+      const rolePermissionCount = await RolePermission.count();
       
       res.status(200).json({
         success: true,
@@ -225,17 +252,25 @@ const createApp = () => {
             users: userCount,
             routes: routeCount,
             messages: messageCount,
-            tourist_registrations: touristCount
+            tourist_registrations: touristCount,
+            roles: roleCount,
+            permissions: permissionCount,
+            user_roles: userRoleCount,
+            role_permissions: rolePermissionCount
           },
           models_loaded: Object.keys(models).filter(key => key !== 'sequelize'),
+          rbac_system: 'integrated',
           associations: {
             'User -> Route': 'hasMany',
             'User -> PersonalizedMessage': 'hasMany',
             'User -> TouristRegistration': 'hasMany',
+            'User -> Role': 'belongsToMany (through UserRole)',
             'Route -> PersonalizedMessage': 'hasMany',
             'PersonalizedMessage -> Route': 'belongsTo',
             'PersonalizedMessage -> User': 'belongsTo',
-            'TouristRegistration -> User': 'belongsTo'
+            'TouristRegistration -> User': 'belongsTo',
+            'Role -> Permission': 'belongsToMany (through RolePermission)',
+            'Role -> User': 'belongsToMany (through UserRole)'
           }
         }
       });
@@ -255,6 +290,7 @@ const createApp = () => {
   app.use('/api/messages', messageRoutes);
   app.use('/api/tourist-registrations', touristRoutes);
   app.use('/api/voice-guides', voiceGuideRoutes);
+  app.use('/api/rbac', rbacRoutes);
 
   // CORS error handler
   app.use(corsErrorHandler);
