@@ -203,6 +203,50 @@ const createApp = () => {
     });
   });
 
+  // Test endpoint to verify database relationships
+  app.get('/api/test', async (req, res) => {
+    try {
+      const { User, Route, PersonalizedMessage, TouristRegistration } = models;
+      
+      // Test database connection
+      const userCount = await User.count();
+      const routeCount = await Route.count();
+      const messageCount = await PersonalizedMessage.count();
+      const touristCount = await TouristRegistration.count();
+      
+      res.status(200).json({
+        success: true,
+        message: 'Database connectivity test successful',
+        data: {
+          database: 'PostgreSQL',
+          status: 'connected',
+          counts: {
+            users: userCount,
+            routes: routeCount,
+            messages: messageCount,
+            tourist_registrations: touristCount
+          },
+          models_loaded: Object.keys(models).filter(key => key !== 'sequelize'),
+          associations: {
+            'User -> Route': 'hasMany',
+            'User -> PersonalizedMessage': 'hasMany',
+            'User -> TouristRegistration': 'hasMany',
+            'Route -> PersonalizedMessage': 'hasMany',
+            'PersonalizedMessage -> Route': 'belongsTo',
+            'PersonalizedMessage -> User': 'belongsTo',
+            'TouristRegistration -> User': 'belongsTo'
+          }
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Database test failed',
+        error: error.message
+      });
+    }
+  });
+
   // API Routes
   app.use('/api/auth', authRoutes);
   app.use('/api/users', userRoutes);

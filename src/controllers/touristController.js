@@ -1,5 +1,4 @@
-const TouristRegistration = require('../models/sql/TouristRegistration');
-const User = require('../models/sql/User');
+const { TouristRegistration, User } = require('../models');
 const logService = require('../services/logService');
 const { Op } = require('sequelize');
 
