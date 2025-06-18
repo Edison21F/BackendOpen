@@ -140,12 +140,12 @@ class LogService {
         ip_address: ipAddress,
         user_agent: userAgent,
         execution_time: executionTime,
-        error_details: error ? {
+        error_details: error ? JSON.stringify({
           message: error.message,
           stack: error.stack,
           code: error.code,
           type: error.constructor.name
-        } : null,
+        }) : null,
         headers: headers || {},
         query_params: queryParams || {},
         route_params: routeParams || {},

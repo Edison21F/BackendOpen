@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/sql/User');
-const UserProfile = require('../models/nosql/UserProfile');
+const { User } = require('../models');
 const encryptionService = require('./encryptionService');
 const logService = require('./logService');
 const config = require('../config/config');

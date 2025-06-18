@@ -22,11 +22,8 @@ const messageRoutes = require('./routes/messages');
 const touristRoutes = require('./routes/tourist');
 const voiceGuideRoutes = require('./routes/voiceGuides');
 
-// Import all models to ensure they are registered
-require('./models/sql/User');
-require('./models/sql/Route');
-require('./models/sql/PersonalizedMessage');
-require('./models/sql/TouristRegistration');
+// Import all models with associations
+const models = require('./models');
 
 /**
  * Create Express application

@@ -1,6 +1,4 @@
-const Route = require('../models/sql/Route');
-const RouteAnalytics = require('../models/nosql/RouteAnalytics');
-const User = require('../models/sql/User');
+const { Route, User } = require('../models');
 const logService = require('./logService');
 const { Op } = require('sequelize');
 

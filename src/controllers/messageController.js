@@ -1,6 +1,4 @@
-const PersonalizedMessage = require('../models/sql/PersonalizedMessage');
-const Route = require('../models/sql/Route');
-const User = require('../models/sql/User');
+const { PersonalizedMessage, Route, User } = require('../models');
 const encryptionService = require('../services/encryptionService');
 const logService = require('../services/logService');
 const { Op } = require('sequelize');
