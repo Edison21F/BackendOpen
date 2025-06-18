@@ -17,9 +17,10 @@ const User = sequelize.define('users', {
     allowNull: false
   },
   rol: {
-    type: DataTypes.ENUM('admin', 'user'),
+    type: DataTypes.ENUM('admin', 'user', 'guide', 'moderator', 'tourist'),
     defaultValue: 'user',
-    allowNull: false
+    allowNull: false,
+    comment: 'Legacy role field - use UserRole table for new role assignments'
   },
   telefono: {
     type: DataTypes.TEXT, // Encrypted field
@@ -80,6 +81,32 @@ User.associate = (models) => {
   User.hasMany(models.TouristRegistration, {
     foreignKey: 'created_by',
     as: 'tourist_registrations'
+  });
+
+  // User has many roles through UserRole
+  User.belongsToMany(models.Role, {
+    through: models.UserRole,
+    foreignKey: 'user_id',
+    otherKey: 'role_id',
+    as: 'roles'
+  });
+
+  // User has many UserRole records
+  User.hasMany(models.UserRole, {
+    foreignKey: 'user_id',
+    as: 'userRoles'
+  });
+
+  // User assigned roles to others
+  User.hasMany(models.UserRole, {
+    foreignKey: 'assigned_by',
+    as: 'assignedRoles'
+  });
+
+  // User granted role permissions
+  User.hasMany(models.RolePermission, {
+    foreignKey: 'granted_by',
+    as: 'grantedPermissions'
   });
 };
 

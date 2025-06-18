@@ -5,6 +5,10 @@ const User = require('./sql/User');
 const Route = require('./sql/Route');
 const PersonalizedMessage = require('./sql/PersonalizedMessage');
 const TouristRegistration = require('./sql/TouristRegistration');
+const Role = require('./sql/Role');
+const Permission = require('./sql/Permission');
+const UserRole = require('./sql/UserRole');
+const RolePermission = require('./sql/RolePermission');
 
 // Models object
 const models = {
@@ -12,6 +16,10 @@ const models = {
   Route,
   PersonalizedMessage,
   TouristRegistration,
+  Role,
+  Permission,
+  UserRole,
+  RolePermission,
   sequelize
 };
 

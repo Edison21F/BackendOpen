@@ -21,6 +21,7 @@ const routeRoutes = require('./routes/routes');
 const messageRoutes = require('./routes/messages');
 const touristRoutes = require('./routes/tourist');
 const voiceGuideRoutes = require('./routes/voiceGuides');
+const rbacRoutes = require('./routes/rbac');
 
 // Import all models with associations
 const models = require('./models');
