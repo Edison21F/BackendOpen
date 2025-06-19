@@ -20,7 +20,7 @@ const config = {
       port: parseInt(process.env.PGPORT) || 5432,
       database: process.env.PGDATABASE || 'openblind_db',
       username: process.env.PGUSER || 'postgres',
-      password: process.env.PGPASSWORD || 'password',
+      password: process.env.PGPASSWORD || '12345',
       dialect: 'postgres',
       logging: false,
       pool: {
