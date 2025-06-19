@@ -1,41 +1,47 @@
 const crypto = require('crypto');
 const config = require('./config');
 
-const ALGORITHM = 'aes-256-gcm';
+const ALGORITHM = 'aes-256-cbc';
 const IV_LENGTH = 16;
-const SALT_LENGTH = 64;
-const TAG_LENGTH = 16;
+const KEY_LENGTH = 32;
 const ENCRYPTION_KEY = config.security.encryptionKey;
 
 /**
- * Encrypt sensitive data using AES-256-GCM
- * @param {string} text - The text to encrypt
- * @returns {string} - The encrypted text in format: salt:iv:tag:encrypted
+ * Modern encryption using crypto.createCipheriv (Node.js 18+ compatible)
+ * @param {string|Date|number} data - The data to encrypt
+ * @returns {string} - The encrypted text in format: iv:encrypted
  */
-const encrypt = (text) => {
-  if (!text) return null;
+const encrypt = (data) => {
+  if (!data) return null;
   
   try {
-    // Generate random salt and IV
-    const salt = crypto.randomBytes(SALT_LENGTH);
+    // Convert data to string if it's not already
+    let text;
+    if (typeof data === 'string') {
+      text = data;
+    } else if (data instanceof Date) {
+      text = data.toISOString();
+    } else if (typeof data === 'number') {
+      text = data.toString();
+    } else {
+      text = String(data);
+    }
+    
+    // Create a consistent key from the encryption key
+    const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', KEY_LENGTH);
+    
+    // Generate a random IV
     const iv = crypto.randomBytes(IV_LENGTH);
     
-    // Derive key using PBKDF2
-    const key = crypto.pbkdf2Sync(ENCRYPTION_KEY, salt, 100000, 32, 'sha256');
-    
     // Create cipher
-    const cipher = crypto.createCipher(ALGORITHM, key);
-    cipher.setAAD(Buffer.from('openblind'));
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
     
     // Encrypt the text
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     
-    // Get the authentication tag
-    const tag = cipher.getAuthTag();
-    
-    // Return the encrypted data in format: salt:iv:tag:encrypted
-    return `${salt.toString('hex')}:${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
+    // Return IV and encrypted data
+    return `${iv.toString('hex')}:${encrypted}`;
   } catch (error) {
     console.error('Encryption error:', error);
     throw new Error('Failed to encrypt data');
@@ -43,32 +49,28 @@ const encrypt = (text) => {
 };
 
 /**
- * Decrypt sensitive data using AES-256-GCM
- * @param {string} encryptedData - The encrypted data in format: salt:iv:tag:encrypted
+ * Modern decryption using crypto.createDecipheriv (Node.js 18+ compatible)
+ * @param {string} encryptedData - The encrypted data in format: iv:encrypted
  * @returns {string} - The decrypted text
  */
 const decrypt = (encryptedData) => {
   if (!encryptedData) return null;
   
   try {
-    // Parse the encrypted data
+    // Split IV and encrypted data
     const parts = encryptedData.split(':');
-    if (parts.length !== 4) {
+    if (parts.length !== 2) {
       throw new Error('Invalid encrypted data format');
     }
     
-    const salt = Buffer.from(parts[0], 'hex');
-    const iv = Buffer.from(parts[1], 'hex');
-    const tag = Buffer.from(parts[2], 'hex');
-    const encrypted = parts[3];
+    const iv = Buffer.from(parts[0], 'hex');
+    const encrypted = parts[1];
     
-    // Derive key using PBKDF2
-    const key = crypto.pbkdf2Sync(ENCRYPTION_KEY, salt, 100000, 32, 'sha256');
+    // Create a consistent key from the encryption key
+    const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', KEY_LENGTH);
     
     // Create decipher
-    const decipher = crypto.createDecipher(ALGORITHM, key);
-    decipher.setAAD(Buffer.from('openblind'));
-    decipher.setAuthTag(tag);
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
     
     // Decrypt the text
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');

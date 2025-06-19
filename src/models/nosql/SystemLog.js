@@ -3,14 +3,14 @@ const mongoose = require('mongoose');
 const systemLogSchema = new mongoose.Schema({
   timestamp: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
+    // Removido: index: true - porque ya se define abajo con schema.index()
   },
   level: {
     type: String,
     required: true,
-    enum: ['info', 'warn', 'error', 'debug'],
-    index: true
+    enum: ['info', 'warn', 'error', 'debug']
+    // Removido: index: true
   },
   method: {
     type: String,
@@ -22,8 +22,8 @@ const systemLogSchema = new mongoose.Schema({
   },
   status_code: {
     type: Number,
-    required: true,
-    index: true
+    required: true
+    // Removido: index: true
   },
   request_body: {
     type: mongoose.Schema.Types.Mixed,
@@ -35,8 +35,8 @@ const systemLogSchema = new mongoose.Schema({
   },
   user_id: {
     type: String,
-    default: null,
-    index: true
+    default: null
+    // Removido: index: true
   },
   ip_address: {
     type: String,
@@ -72,18 +72,18 @@ const systemLogSchema = new mongoose.Schema({
   }
 }, {
   collection: 'system_logs',
-  timestamps: false,
+  timestamps: false, // Deshabilitado porque usamos timestamp manual
   capped: { size: 100000000, max: 1000000 } // 100MB cap, max 1M documents
 });
 
-// Indexes for better query performance
-systemLogSchema.index({ timestamp: -1 });
-systemLogSchema.index({ level: 1, timestamp: -1 });
-systemLogSchema.index({ user_id: 1, timestamp: -1 });
-systemLogSchema.index({ status_code: 1, timestamp: -1 });
-systemLogSchema.index({ method: 1, url: 1 });
+// Índices definidos aquí - sin duplicados
+systemLogSchema.index({ timestamp: -1 }); // Índice principal por timestamp descendente
+systemLogSchema.index({ level: 1, timestamp: -1 }); // Compuesto por level y timestamp
+systemLogSchema.index({ user_id: 1, timestamp: -1 }); // Compuesto por user_id y timestamp
+systemLogSchema.index({ status_code: 1, timestamp: -1 }); // Compuesto por status_code y timestamp
+systemLogSchema.index({ method: 1, url: 1 }); // Compuesto por method y url
 
-// TTL index to automatically delete old logs (30 days)
+// TTL index para eliminar logs antiguos automáticamente (30 días)
 systemLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: 2592000 });
 
 module.exports = mongoose.model('SystemLog', systemLogSchema);

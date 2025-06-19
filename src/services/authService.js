@@ -4,6 +4,9 @@ const encryptionService = require('./encryptionService');
 const logService = require('./logService');
 const config = require('../config/config');
 
+// Import MongoDB models
+const UserProfile = require('../models/nosql/UserProfile');
+
 class AuthService {
   /**
    * Register a new user
@@ -40,23 +43,28 @@ class AuthService {
         is_active: true
       });
 
-      // Create user profile in MongoDB
-      await UserProfile.create({
-        user_id: user.id,
-        preferences: {
-          language: 'es',
-          voice_speed: 1.0,
-          voice_type: 'female',
-          notifications_enabled: true,
-          location_sharing: false
-        },
-        accessibility_settings: {
-          high_contrast: false,
-          large_text: false,
-          voice_guidance: true,
-          vibration_feedback: true
-        }
-      });
+      // Create user profile in MongoDB (with try-catch for environment compatibility)
+      try {
+        await UserProfile.create({
+          user_id: user.id,
+          preferences: {
+            language: 'es',
+            voice_speed: 1.0,
+            voice_type: 'female',
+            notifications_enabled: true,
+            location_sharing: false
+          },
+          accessibility_settings: {
+            high_contrast: false,
+            large_text: false,
+            voice_guidance: true,
+            vibration_feedback: true
+          }
+        });
+      } catch (mongoError) {
+        logService.warn('Could not create user profile in MongoDB:', mongoError);
+        // Continue without MongoDB profile - it's not critical for registration
+      }
 
       // Generate JWT token
       const token = this.generateToken(user);
@@ -235,7 +243,7 @@ class AuthService {
         { upsert: true }
       );
     } catch (error) {
-      logService.error('Error updating login history:', error);
+      logService.warn('Error updating login history (MongoDB not available):', error);
       // Don't throw error as this is not critical for login process
     }
   }

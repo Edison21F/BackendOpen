@@ -4,8 +4,8 @@ const userProfileSchema = new mongoose.Schema({
   user_id: {
     type: String,
     required: true,
-    unique: true,
-    index: true
+    unique: true
+    // Removido: index: true - porque ya se define abajo
   },
   profile_image: {
     type: String,
@@ -106,9 +106,9 @@ const userProfileSchema = new mongoose.Schema({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-// Indexes for better query performance
-userProfileSchema.index({ user_id: 1 });
-userProfileSchema.index({ last_login: -1 });
-userProfileSchema.index({ 'login_history.timestamp': -1 });
+// Índices definidos aquí - sin duplicados
+userProfileSchema.index({ user_id: 1 }, { unique: true }); // Índice único por user_id
+userProfileSchema.index({ last_login: -1 }); // Índice por último login
+userProfileSchema.index({ 'login_history.timestamp': -1 }); // Índice por historial de login
 
 module.exports = mongoose.model('UserProfile', userProfileSchema);

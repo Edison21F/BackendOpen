@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const routeAnalyticsSchema = new mongoose.Schema({
   route_id: {
     type: String,
-    required: true,
-    index: true
+    required: true
+    // Removido: index: true - porque ya se define abajo
   },
   usage_statistics: {
     total_uses: {
@@ -131,9 +131,9 @@ const routeAnalyticsSchema = new mongoose.Schema({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-// Indexes for better query performance
-routeAnalyticsSchema.index({ route_id: 1 });
-routeAnalyticsSchema.index({ 'usage_statistics.daily_usage.date': -1 });
-routeAnalyticsSchema.index({ 'user_feedback.timestamp': -1 });
+// Índices definidos aquí - sin duplicados
+routeAnalyticsSchema.index({ route_id: 1 }); // Índice principal por route_id
+routeAnalyticsSchema.index({ 'usage_statistics.daily_usage.date': -1 }); // Índice por fecha de uso
+routeAnalyticsSchema.index({ 'user_feedback.timestamp': -1 }); // Índice por timestamp de feedback
 
 module.exports = mongoose.model('RouteAnalytics', routeAnalyticsSchema);

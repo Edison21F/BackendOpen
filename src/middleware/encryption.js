@@ -1,107 +1,58 @@
+// src/middleware/encryption.js - Versión Simplificada y Corregida
+
 const encryptionService = require('../services/encryptionService');
 const logService = require('../services/logService');
 
 /**
- * Middleware to encrypt sensitive request data
- * @param {Array} fields - Fields to encrypt
- */
-const encryptRequestData = (fields = []) => {
-  return (req, res, next) => {
-    try {
-      if (req.body && Object.keys(req.body).length > 0) {
-        const encryptedBody = encryptionService.encryptFields(req.body, fields);
-        req.body = encryptedBody;
-      }
-      next();
-    } catch (error) {
-      logService.error('Request data encryption failed:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Data processing error'
-      });
-    }
-  };
-};
-
-/**
- * Middleware to decrypt sensitive response data
- * @param {Array} fields - Fields to decrypt
- */
-const decryptResponseData = (fields = []) => {
-  return (req, res, next) => {
-    // Store original json method
-    const originalJson = res.json;
-    
-    // Override json method
-    res.json = function(data) {
-      try {
-        if (data && typeof data === 'object') {
-          // Handle single object
-          if (data.user || data.users) {
-            if (data.user) {
-              data.user = encryptionService.decryptFields(data.user, fields);
-            }
-            if (data.users && Array.isArray(data.users)) {
-              data.users = data.users.map(user => 
-                encryptionService.decryptFields(user, fields)
-              );
-            }
-          }
-          // Handle direct data decryption
-          else if (fields.some(field => data[field])) {
-            data = encryptionService.decryptFields(data, fields);
-          }
-        }
-      } catch (error) {
-        logService.error('Response data decryption failed:', error);
-        // Continue with original data if decryption fails
-      }
-      
-      // Call original json method
-      return originalJson.call(this, data);
-    };
-    
-    next();
-  };
-};
-
-/**
- * Middleware to handle user data encryption/decryption
+ * Middleware para manejar encriptación/desencriptación de datos de usuario
+ * Se aplica solo en rutas específicas, no globalmente
  */
 const handleUserDataEncryption = (req, res, next) => {
-  const userFields = ['email', 'telefono', 'nombres', 'apellidos', 'fecha_nacimiento'];
-  
   try {
-    // Encrypt request data
+    // Encriptar datos de entrada si existen
     if (req.body && Object.keys(req.body).length > 0) {
+      const userFields = ['email', 'telefono', 'nombres', 'apellidos', 'fecha_nacimiento'];
       const fieldsToEncrypt = userFields.filter(field => req.body[field] !== undefined);
+      
       if (fieldsToEncrypt.length > 0) {
-        req.body = encryptionService.encryptFields(req.body, fieldsToEncrypt);
+        // Debug log
+        logService.debug('Encrypting user fields:', { fields: fieldsToEncrypt, userId: req.user?.id });
+        
+        const encryptedData = encryptionService.encryptFields(req.body, fieldsToEncrypt);
+        req.body = { ...req.body, ...encryptedData };
       }
     }
     
-    // Store original json method for response decryption
+    // Interceptar respuesta para desencriptar
     const originalJson = res.json;
     res.json = function(data) {
       try {
         if (data && typeof data === 'object') {
-          // Handle user object
+          // Manejar objeto user único
           if (data.user) {
+            logService.debug('Decrypting user data in response', { userId: data.user.id });
             data.user = encryptionService.decryptUserData(data.user);
           }
-          // Handle users array
+          
+          // Manejar array de usuarios
           if (data.users && Array.isArray(data.users)) {
-            data.users = data.users.map(user => 
-              encryptionService.decryptUserData(user)
-            );
+            logService.debug('Decrypting users array', { count: data.users.length });
+            data.users = data.users.map(user => encryptionService.decryptUserData(user));
           }
-          // Handle direct user data
-          else if (userFields.some(field => data[field])) {
-            data = encryptionService.decryptUserData(data);
+          
+          // Manejar datos dentro de data.data
+          if (data.data) {
+            if (data.data.user) {
+              data.data.user = encryptionService.decryptUserData(data.data.user);
+            }
+            if (data.data.users && Array.isArray(data.data.users)) {
+              data.data.users = data.data.users.map(user => encryptionService.decryptUserData(user));
+            }
           }
         }
       } catch (error) {
-        logService.error('User data decryption failed:', error);
+        logService.error('Error decrypting user data in response:', error);
+        // Continuar con datos originales si falla la desencriptación
       }
       
       return originalJson.call(this, data);
@@ -109,7 +60,7 @@ const handleUserDataEncryption = (req, res, next) => {
     
     next();
   } catch (error) {
-    logService.error('User data encryption failed:', error);
+    logService.error('User data encryption middleware failed:', error);
     return res.status(500).json({
       success: false,
       message: 'Data processing error'
@@ -118,38 +69,50 @@ const handleUserDataEncryption = (req, res, next) => {
 };
 
 /**
- * Middleware to handle message encryption/decryption
+ * Middleware para manejar encriptación/desencriptación de mensajes
  */
 const handleMessageEncryption = (req, res, next) => {
   try {
-    // Encrypt message in request
+    // Encriptar mensaje en request si existe
     if (req.body && req.body.message) {
-      req.body.message = encryptionService.encryptMessage(req.body.message);
+      logService.debug('Encrypting message', { userId: req.user?.id });
+      // No encriptar aquí - se hace en el controller para evitar doble encriptación
     }
     
-    // Store original json method for response decryption
+    // Interceptar respuesta para desencriptar mensajes
     const originalJson = res.json;
     res.json = function(data) {
       try {
         if (data && typeof data === 'object') {
-          // Handle single message
-          if (data.message && typeof data.message === 'string') {
-            data.message = encryptionService.decryptMessage(data.message);
+          // Manejar mensaje único
+          if (data.message && typeof data.message === 'object' && data.message.message) {
+            data.message.message = encryptionService.decryptMessage(data.message.message);
           }
-          // Handle messages array
+          
+          // Manejar array de mensajes
           if (data.messages && Array.isArray(data.messages)) {
             data.messages = data.messages.map(msg => ({
               ...msg,
               message: encryptionService.decryptMessage(msg.message)
             }));
           }
-          // Handle message object
-          if (data.message && typeof data.message === 'object' && data.message.message) {
-            data.message.message = encryptionService.decryptMessage(data.message.message);
+          
+          // Manejar datos dentro de data.data
+          if (data.data) {
+            if (data.data.message && data.data.message.message) {
+              data.data.message.message = encryptionService.decryptMessage(data.data.message.message);
+            }
+            if (data.data.messages && Array.isArray(data.data.messages)) {
+              data.data.messages = data.data.messages.map(msg => ({
+                ...msg,
+                message: encryptionService.decryptMessage(msg.message)
+              }));
+            }
           }
         }
       } catch (error) {
-        logService.error('Message decryption failed:', error);
+        logService.error('Error decrypting message data in response:', error);
+        // Continuar con datos originales si falla la desencriptación
       }
       
       return originalJson.call(this, data);
@@ -157,7 +120,7 @@ const handleMessageEncryption = (req, res, next) => {
     
     next();
   } catch (error) {
-    logService.error('Message encryption failed:', error);
+    logService.error('Message encryption middleware failed:', error);
     return res.status(500).json({
       success: false,
       message: 'Data processing error'
@@ -166,27 +129,7 @@ const handleMessageEncryption = (req, res, next) => {
 };
 
 /**
- * Middleware to sanitize sensitive data from logs
- */
-const sanitizeLoggableData = (data) => {
-  if (!data || typeof data !== 'object') return data;
-  
-  const sensitiveFields = ['password', 'password_hash', 'token', 'secret', 'key'];
-  const sanitized = { ...data };
-  
-  Object.keys(sanitized).forEach(key => {
-    if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
-      sanitized[key] = '[REDACTED]';
-    } else if (typeof sanitized[key] === 'object') {
-      sanitized[key] = sanitizeLoggableData(sanitized[key]);
-    }
-  });
-  
-  return sanitized;
-};
-
-/**
- * Middleware to remove sensitive fields from responses
+ * Middleware para remover campos sensibles de las respuestas
  */
 const removeSensitiveFields = (fieldsToRemove = ['password_hash', 'password']) => {
   return (req, res, next) => {
@@ -210,7 +153,7 @@ const removeSensitiveFields = (fieldsToRemove = ['password_hash', 'password']) =
 };
 
 /**
- * Recursively remove sensitive fields from object
+ * Recursivamente remover campos sensibles
  */
 const removeSensitiveFieldsRecursive = (obj, fieldsToRemove) => {
   if (!obj || typeof obj !== 'object') return obj;
@@ -234,10 +177,7 @@ const removeSensitiveFieldsRecursive = (obj, fieldsToRemove) => {
 };
 
 module.exports = {
-  encryptRequestData,
-  decryptResponseData,
   handleUserDataEncryption,
   handleMessageEncryption,
-  sanitizeLoggableData,
   removeSensitiveFields
 };

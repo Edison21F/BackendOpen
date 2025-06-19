@@ -13,8 +13,13 @@ class EncryptionService {
     const fieldsToEncrypt = ['email', 'telefono', 'nombres', 'apellidos', 'fecha_nacimiento'];
     
     fieldsToEncrypt.forEach(field => {
-      if (encryptedData[field]) {
-        encryptedData[field] = encrypt(encryptedData[field]);
+      if (encryptedData[field] !== undefined && encryptedData[field] !== null) {
+        try {
+          encryptedData[field] = encrypt(encryptedData[field]);
+        } catch (error) {
+          console.error(`Error encrypting field ${field}:`, error);
+          // Keep original value if encryption fails
+        }
       }
     });
     
@@ -35,11 +40,12 @@ class EncryptionService {
     const fieldsToDecrypt = ['email', 'telefono', 'nombres', 'apellidos', 'fecha_nacimiento'];
     
     fieldsToDecrypt.forEach(field => {
-      if (decryptedData[field]) {
+      if (decryptedData[field] !== undefined && decryptedData[field] !== null) {
         try {
           decryptedData[field] = decrypt(decryptedData[field]);
         } catch (error) {
           console.error(`Error decrypting field ${field}:`, error);
+          // Keep original value if decryption fails
           decryptedData[field] = null;
         }
       }
@@ -54,7 +60,13 @@ class EncryptionService {
    * @returns {string} - Encrypted message
    */
   encryptMessage(message) {
-    return encrypt(message);
+    if (!message) return null;
+    try {
+      return encrypt(message);
+    } catch (error) {
+      console.error('Error encrypting message:', error);
+      throw error;
+    }
   }
 
   /**
@@ -63,7 +75,13 @@ class EncryptionService {
    * @returns {string} - Decrypted message
    */
   decryptMessage(encryptedMessage) {
-    return decrypt(encryptedMessage);
+    if (!encryptedMessage) return null;
+    try {
+      return decrypt(encryptedMessage);
+    } catch (error) {
+      console.error('Error decrypting message:', error);
+      throw error;
+    }
   }
 
   /**
@@ -95,8 +113,21 @@ class EncryptionService {
     const encryptedData = { ...data };
     
     fields.forEach(field => {
-      if (encryptedData[field]) {
-        encryptedData[field] = encrypt(encryptedData[field]);
+      if (encryptedData[field] !== undefined && encryptedData[field] !== null) {
+        try {
+          // Convert to string if needed before encryption
+          let valueToEncrypt = encryptedData[field];
+          if (valueToEncrypt instanceof Date) {
+            valueToEncrypt = valueToEncrypt.toISOString();
+          } else if (typeof valueToEncrypt !== 'string') {
+            valueToEncrypt = String(valueToEncrypt);
+          }
+          
+          encryptedData[field] = encrypt(valueToEncrypt);
+        } catch (error) {
+          console.error(`Error encrypting field ${field}:`, error);
+          // Keep original value if encryption fails
+        }
       }
     });
     
@@ -115,7 +146,7 @@ class EncryptionService {
     const decryptedData = { ...data };
     
     fields.forEach(field => {
-      if (decryptedData[field]) {
+      if (decryptedData[field] !== undefined && decryptedData[field] !== null) {
         try {
           decryptedData[field] = decrypt(decryptedData[field]);
         } catch (error) {

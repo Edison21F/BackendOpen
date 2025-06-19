@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const voiceGuideSchema = new mongoose.Schema({
   route_id: {
     type: String,
-    required: true,
-    index: true
+    required: true
+    // Sin index: true - se define abajo
   },
   audio_file_url: {
     type: String,
@@ -30,12 +30,14 @@ const voiceGuideSchema = new mongoose.Schema({
     required: true,
     default: 'es',
     enum: ['es', 'en', 'fr', 'de', 'it', 'pt']
+    // Sin index: true - se define abajo
   },
   voice_settings: {
     voice_type: {
       type: String,
       enum: ['male', 'female'],
       default: 'female'
+      // Sin index: true - se define abajo si es necesario
     },
     speed: {
       type: Number,
@@ -117,9 +119,9 @@ const voiceGuideSchema = new mongoose.Schema({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-// Indexes for better query performance
-voiceGuideSchema.index({ route_id: 1 });
-voiceGuideSchema.index({ language: 1 });
-voiceGuideSchema.index({ 'voice_settings.voice_type': 1 });
+// Índices definidos aquí - sin duplicados
+voiceGuideSchema.index({ route_id: 1 }); // Índice por route_id
+voiceGuideSchema.index({ language: 1 }); // Índice por idioma
+voiceGuideSchema.index({ 'voice_settings.voice_type': 1 }); // Índice por tipo de voz
 
 module.exports = mongoose.model('VoiceGuide', voiceGuideSchema);
